@@ -1,1 +1,2 @@
-# ethereum-solidity
+# Ethereum Solidity Project
+
