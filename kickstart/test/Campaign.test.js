@@ -1,7 +1,9 @@
 const assert = require('assert');
 const ganache = require('ganache-cli');
 const Web3 = require('web3');
-const web3 = new Web3(ganache.provider());
+
+const provider = ganache.provider();
+const web3 = new Web3(provider);
 
 const compiledFactory = require('../ethereum/build/CampaignFactory.json');
 const compiledCampaign = require('../ethereum/build/Campaign.json');
@@ -19,6 +21,8 @@ beforeEach(async () => {
 					.deploy({ data: compiledFactory.bytecode })
 					.send({ from: accounts[0], gas: '1000000' });
 
+	factory.setProvider(provider);
+
 	await factory.methods.createCampaign('100').send({
 		from: accounts[0],
 		gas: '1000000'
@@ -31,6 +35,8 @@ beforeEach(async () => {
 		JSON.parse(compiledCampaign.interface),
 		campaignAddress
 	);
+
+	campaign.setProvider(provider);
 
 });
 
@@ -59,7 +65,7 @@ describe('Campaigns', () => {
 	it('requires a minimum contribution', async () => {
 		try {
 			await campaign.methods.contribute().send({
-				from: accounts[2],
+				from: accounts[1],
 				value: '50'
 			});
 			assert(false);
@@ -70,7 +76,8 @@ describe('Campaigns', () => {
 
 	it('allows a manager to make a payment request', async () => {
 		await campaign.methods.createRequest('Buy batteries', '300', accounts[1]).send({
-			from: accounts[0]
+			from: accounts[0],
+			gas: '1000000'
 		});
 
 		const request = await campaign.methods.requests(0).call();
@@ -101,9 +108,11 @@ describe('Campaigns', () => {
 		let balance = await web3.eth.getBalance(accounts[1]);
 		balance = web3.utils.fromWei(balance, 'ether');
 		balance = parseFloat(balance);
-		console.log('balance', balance);
+		
 		assert(balance > 104);
 
 	});
+
+
 
 });
